@@ -81,9 +81,9 @@ export const ProjectDashboard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
+    <div className="h-screen w-full bg-slate-50 flex flex-col font-sans overflow-y-auto">
       {/* Top Navigation */}
-      <header className="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between shadow-xs">
+      <header className="h-16 bg-white/95 backdrop-blur-xs border-b border-slate-200 px-6 flex items-center justify-between shadow-xs sticky top-0 z-20 shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-glow">
             <Zap size={20} className="fill-current text-amber-300" />
@@ -116,7 +116,7 @@ export const ProjectDashboard: React.FC = () => {
       </header>
 
       {/* Main Dashboard Content */}
-      <main className="max-w-6xl w-full mx-auto p-6 md:p-8 flex-1 space-y-8">
+      <main className="max-w-6xl w-full mx-auto p-6 md:p-8 pb-20 flex-1 space-y-8">
         {/* Banner Section */}
         <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 rounded-3xl p-8 text-white shadow-elevated relative overflow-hidden">
           <div className="relative z-10 max-w-xl">
