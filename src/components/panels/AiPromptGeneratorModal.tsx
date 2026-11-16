@@ -241,8 +241,10 @@ export const AiPromptGeneratorModal: React.FC = () => {
   if (!isPromptGeneratorOpen) return null;
 
   const config = getStoredAIConfig();
+  const envGroqKey = (import.meta.env.VITE_GROQ_API_KEY as string | undefined)?.trim();
   const hasGroqKey = !!(
     (config.provider === 'groq' && config.apiKey) ||
+    envGroqKey ||
     localStorage.getItem('kuvix_groq_api_key')
   );
 

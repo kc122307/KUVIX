@@ -13,12 +13,31 @@ export interface GeneratedStructure {
 }
 
 export function getStoredAIConfig(): AIProviderConfig {
+  const envGroqKey = (import.meta.env.VITE_GROQ_API_KEY as string | undefined)?.trim();
   try {
     const raw = localStorage.getItem(AI_CONFIG_KEY) || localStorage.getItem(LEGACY_AI_CONFIG_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (!parsed.apiKey && envGroqKey) {
+        parsed.apiKey = envGroqKey;
+        if (parsed.provider === 'local') {
+          parsed.provider = 'groq';
+        }
+      }
+      return parsed;
+    }
   } catch (err) {
     console.error('Failed to parse AI config:', err);
   }
+
+  if (envGroqKey) {
+    return {
+      provider: 'groq',
+      model: 'llama-3.3-70b-versatile',
+      apiKey: envGroqKey
+    };
+  }
+
   return {
     provider: 'local',
     model: 'llama-3.3-70b-versatile'
@@ -39,9 +58,10 @@ export async function generateStructureWithAI(
   config: AIProviderConfig = getStoredAIConfig()
 ): Promise<GeneratedStructure> {
   const cleanPrompt = prompt.trim();
+  const envGroqKey = (import.meta.env.VITE_GROQ_API_KEY as string | undefined)?.trim();
   const groqApiKey = config.provider === 'groq' && config.apiKey
     ? config.apiKey
-    : localStorage.getItem('kuvix_groq_api_key') || (config.apiKey && config.apiKey.startsWith('gsk_') ? config.apiKey : '');
+    : envGroqKey || localStorage.getItem('kuvix_groq_api_key') || (config.apiKey && config.apiKey.startsWith('gsk_') ? config.apiKey : '');
 
   // 1. Try Groq AI if key is provided or configured
   if (groqApiKey) {
@@ -248,18 +268,21 @@ export async function processTextWithAI(
   text: string,
   config: AIProviderConfig = getStoredAIConfig()
 ): Promise<ParsedDocument> {
-  // If provider is local, use our fast, deterministic NLP engine
-  if (config.provider === 'local') {
+  const envGroqKey = (import.meta.env.VITE_GROQ_API_KEY as string | undefined)?.trim();
+  const effectiveGroqKey = (config.provider === 'groq' && config.apiKey) ? config.apiKey : envGroqKey;
+
+  // If provider is local and no env key, use our fast, deterministic NLP engine
+  if (config.provider === 'local' && !envGroqKey) {
     return parseTextToDocument(text);
   }
 
-  // 1. Try Groq AI if configured
-  if (config.provider === 'groq' && config.apiKey) {
+  // 1. Try Groq AI if configured or env key exists
+  if ((config.provider === 'groq' || !config.provider) && effectiveGroqKey) {
     try {
       const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${config.apiKey}`,
+          'Authorization': `Bearer ${effectiveGroqKey}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({

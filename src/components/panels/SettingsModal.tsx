@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Cpu, Key, Server, Check, Shield } from 'lucide-react';
+import { X, Cpu, Key, Server, Check, Shield, CheckCircle2 } from 'lucide-react';
 import { useDiagramStore } from '../../store/useDiagramStore';
 import { getStoredAIConfig, saveAIConfig } from '../../engine/aiProvider';
 import { AIProviderConfig } from '../../types/diagram';
@@ -8,6 +8,7 @@ export const SettingsModal: React.FC = () => {
   const { isSettingsOpen, setIsSettingsOpen } = useDiagramStore();
   const [config, setConfig] = useState<AIProviderConfig>(getStoredAIConfig());
   const [isSaved, setIsSaved] = useState(false);
+  const envGroqKey = (import.meta.env.VITE_GROQ_API_KEY as string | undefined)?.trim();
 
   if (!isSettingsOpen) return null;
 
@@ -126,15 +127,23 @@ export const SettingsModal: React.FC = () => {
                     Get Free Key (console.groq.com) &rarr;
                   </a>
                 </div>
+
+                {envGroqKey && (
+                  <div className="mb-2 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-medium">
+                    <CheckCircle2 size={13} className="text-emerald-600 shrink-0" />
+                    <span>Active from <code>.env</code> (<code>VITE_GROQ_API_KEY</code>)</span>
+                  </div>
+                )}
+
                 <input
                   type="password"
-                  placeholder="gsk_..."
+                  placeholder={envGroqKey ? 'Configured via .env (or override here)' : 'gsk_...'}
                   value={config.apiKey || ''}
                   onChange={(e) => setConfig({ ...config, apiKey: e.target.value })}
                   className="w-full px-3 py-1.5 text-xs border border-purple-300 rounded-lg outline-none focus:border-purple-500 bg-white"
                 />
-                <span className="text-[10px] text-slate-400 mt-1 block">
-                  Stored securely in your local browser storage. Powers instant diagram generation.
+                <span className="text-[10px] text-slate-500 mt-1 block">
+                  Paste your key here (saved to browser) or define <code>VITE_GROQ_API_KEY</code> in a <code>.env</code> file in the project root.
                 </span>
               </div>
 
