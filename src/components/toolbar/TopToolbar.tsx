@@ -136,6 +136,108 @@ export const TopToolbar: React.FC<TopToolbarProps> = ({
             )}
           </div>
         </div>
+
+        <div className="h-5 w-px bg-slate-200 hidden sm:block shrink-0" />
+
+        {/* Canvas Controls: Undo/Redo, Free Aspect Ratio, Present, Intent, Health, AI Refine */}
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* Undo / Redo */}
+          <div className="flex items-center border border-slate-200 rounded-lg overflow-hidden bg-slate-50/50 shrink-0">
+            <button
+              onClick={undo}
+              disabled={!canUndo}
+              className="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-white disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+              title="Undo (Ctrl+Z)"
+            >
+              <Undo2 size={15} />
+            </button>
+            <div className="w-px h-4 bg-slate-200" />
+            <button
+              onClick={redo}
+              disabled={!canRedo}
+              className="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-white disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+              title="Redo (Ctrl+Y)"
+            >
+              <Redo2 size={15} />
+            </button>
+          </div>
+
+          {/* Aspect Ratio Frame Selector */}
+          <div className="relative shrink-0">
+            <button
+              onClick={() => setIsRatioMenuOpen(!isRatioMenuOpen)}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 border border-slate-200 hover:border-slate-300 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+              title="Aspect Ratio Frame"
+            >
+              <Maximize size={13} className="text-slate-500" />
+              <span className="uppercase text-[11px] font-semibold">{currentProject.aspectRatio || 'Free'}</span>
+              <ChevronDown size={12} className="text-slate-400" />
+            </button>
+
+            {isRatioMenuOpen && (
+              <div className="absolute left-0 mt-1.5 w-44 bg-white border border-slate-200 rounded-xl shadow-elevated py-1.5 z-50 animate-in fade-in">
+                <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  Canvas Frame
+                </div>
+                {(['free', '16:9', '1:1', '4:3'] as AspectRatio[]).map((r) => (
+                  <button
+                    key={r}
+                    onClick={() => {
+                      setAspectRatio(r);
+                      setIsRatioMenuOpen(false);
+                    }}
+                    className={`w-full px-3 py-1.5 text-left flex items-center justify-between text-xs hover:bg-slate-50 transition-colors ${
+                      (currentProject.aspectRatio || 'free') === r ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-700'
+                    }`}
+                  >
+                    <span className="capitalize">{r === 'free' ? 'Free (Infinite)' : r === '16:9' ? '16:9 (Slides)' : r === '1:1' ? '1:1 (Square)' : '4:3 (Doc)'}</span>
+                    {(currentProject.aspectRatio || 'free') === r && <Check size={13} />}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Present (Slides) Button */}
+          <button
+            onClick={() => setIsPresentationOpen(true)}
+            className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 border border-slate-200 hover:border-blue-400 rounded-lg text-xs font-semibold text-slate-700 hover:bg-blue-50/40 transition-all shrink-0"
+            title="KUVIX Slides: Present full screen"
+          >
+            <MonitorPlay size={14} className="text-blue-600" />
+            <span>Present</span>
+          </button>
+
+          {/* Intelligent Intent Analyzer */}
+          <button
+            onClick={() => setIsIntentAnalysisOpen(true)}
+            className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 border border-slate-200 hover:border-indigo-400 rounded-lg text-xs font-semibold text-slate-700 hover:bg-indigo-50/30 transition-all cursor-pointer shrink-0"
+            title="Intelligent user intent analysis & clarifying questions"
+          >
+            <Compass size={14} className="text-indigo-600" />
+            <span>Intent</span>
+          </button>
+
+          {/* Diagram Health Checker */}
+          <button
+            onClick={() => setIsCheckerOpen(true)}
+            className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 border border-slate-200 hover:border-emerald-400 rounded-lg text-xs font-semibold text-slate-700 hover:bg-emerald-50/30 transition-all cursor-pointer shrink-0"
+            title="Diagram intelligence checker (linter & diagnostics)"
+          >
+            <ShieldCheck size={14} className="text-emerald-600" />
+            <span>Health</span>
+          </button>
+
+          {/* AI Refine Button */}
+          <button
+            onClick={() => setIsAiRefineOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg text-xs font-semibold shadow-xs hover:shadow-glow transition-all shrink-0"
+            title="Refine diagram with Natural Language instructions"
+          >
+            <Sparkles size={14} className="fill-current text-amber-300" />
+            <span className="hidden sm:inline">AI Refine</span>
+          </button>
+        </div>
       </div>
 
       {/* Center: AI Feedback notice if recent */}
@@ -146,105 +248,8 @@ export const TopToolbar: React.FC<TopToolbarProps> = ({
         </div>
       )}
 
-      {/* Right Toolbar Controls */}
-      <div className="flex items-center gap-1.5 sm:gap-2">
-        {/* Undo / Redo */}
-        <div className="flex items-center border border-slate-200 rounded-lg overflow-hidden bg-slate-50/50">
-          <button
-            onClick={undo}
-            disabled={!canUndo}
-            className="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-white disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
-            title="Undo (Ctrl+Z)"
-          >
-            <Undo2 size={15} />
-          </button>
-          <div className="w-px h-4 bg-slate-200" />
-          <button
-            onClick={redo}
-            disabled={!canRedo}
-            className="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-white disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
-            title="Redo (Ctrl+Y)"
-          >
-            <Redo2 size={15} />
-          </button>
-        </div>
-
-        {/* Aspect Ratio Frame Selector */}
-        <div className="relative">
-          <button
-            onClick={() => setIsRatioMenuOpen(!isRatioMenuOpen)}
-            className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 border border-slate-200 hover:border-slate-300 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
-            title="Aspect Ratio Frame"
-          >
-            <Maximize size={13} className="text-slate-500" />
-            <span className="uppercase text-[11px] font-semibold">{currentProject.aspectRatio || 'Free'}</span>
-            <ChevronDown size={12} className="text-slate-400" />
-          </button>
-
-          {isRatioMenuOpen && (
-            <div className="absolute right-0 mt-1.5 w-44 bg-white border border-slate-200 rounded-xl shadow-elevated py-1.5 z-50 animate-in fade-in">
-              <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                Canvas Frame
-              </div>
-              {(['free', '16:9', '1:1', '4:3'] as AspectRatio[]).map((r) => (
-                <button
-                  key={r}
-                  onClick={() => {
-                    setAspectRatio(r);
-                    setIsRatioMenuOpen(false);
-                  }}
-                  className={`w-full px-3 py-1.5 text-left flex items-center justify-between text-xs hover:bg-slate-50 transition-colors ${
-                    (currentProject.aspectRatio || 'free') === r ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-700'
-                  }`}
-                >
-                  <span className="capitalize">{r === 'free' ? 'Free (Infinite)' : r === '16:9' ? '16:9 (Slides)' : r === '1:1' ? '1:1 (Square)' : '4:3 (Doc)'}</span>
-                  {(currentProject.aspectRatio || 'free') === r && <Check size={13} />}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Present (Slides) Button */}
-        <button
-          onClick={() => setIsPresentationOpen(true)}
-          className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 border border-slate-200 hover:border-blue-400 rounded-lg text-xs font-semibold text-slate-700 hover:bg-blue-50/40 transition-all"
-          title="KUVIX Slides: Present full screen"
-        >
-          <MonitorPlay size={14} className="text-blue-600" />
-          <span>Present</span>
-        </button>
-
-        {/* Intelligent Intent Analyzer */}
-        <button
-          onClick={() => setIsIntentAnalysisOpen(true)}
-          className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 border border-slate-200 hover:border-indigo-400 rounded-lg text-xs font-semibold text-slate-700 hover:bg-indigo-50/30 transition-all cursor-pointer"
-          title="Intelligent user intent analysis & clarifying questions"
-        >
-          <Compass size={14} className="text-indigo-600" />
-          <span>Intent</span>
-        </button>
-
-        {/* Diagram Health Checker */}
-        <button
-          onClick={() => setIsCheckerOpen(true)}
-          className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 border border-slate-200 hover:border-emerald-400 rounded-lg text-xs font-semibold text-slate-700 hover:bg-emerald-50/30 transition-all cursor-pointer"
-          title="Diagram intelligence checker (linter & diagnostics)"
-        >
-          <ShieldCheck size={14} className="text-emerald-600" />
-          <span>Health</span>
-        </button>
-
-        {/* AI Refine Button */}
-        <button
-          onClick={() => setIsAiRefineOpen(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg text-xs font-semibold shadow-xs hover:shadow-glow transition-all"
-          title="Refine diagram with Natural Language instructions"
-        >
-          <Sparkles size={14} className="fill-current text-amber-300" />
-          <span className="hidden sm:inline">AI Refine</span>
-        </button>
-
+      {/* Right Toolbar Controls: Panel Toggle & Export Actions */}
+      <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
         {/* Properties Panel Toggle */}
         <button
           onClick={onToggleProperties}
