@@ -1,4 +1,5 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { BookOpen } from 'lucide-react';
 import { useDiagramStore } from './store/useDiagramStore';
 import { TopToolbar } from './components/toolbar/TopToolbar';
 import { DocumentEditor } from './components/editor/DocumentEditor';
@@ -21,10 +22,21 @@ import { AiPromptGeneratorModal } from './components/panels/AiPromptGeneratorMod
 
 export function App() {
   const { activeView } = useDiagramStore();
-  const [isDocCollapsed, setIsDocCollapsed] = useState(false);
-  const [isPropertiesOpen, setIsPropertiesOpen] = useState(true);
+  const [isDocCollapsed, setIsDocCollapsed] = useState(() => typeof window !== 'undefined' && window.innerWidth < 768);
+  const [isPropertiesOpen, setIsPropertiesOpen] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 1024);
 
   const canvasRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleResize = () => {
+      // Auto-adjust panels when resizing between mobile and desktop breakpoints
+      if (window.innerWidth < 768) {
+        setIsPropertiesOpen(false);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   if (activeView === 'dashboard') {
     return (
@@ -52,6 +64,18 @@ export function App() {
 
         <main className="flex-1 h-full relative overflow-hidden">
           <DiagramCanvas canvasRef={canvasRef} />
+
+          {/* Mobile Quick Floating Document Opener */}
+          {isDocCollapsed && (
+            <button
+              onClick={() => setIsDocCollapsed(false)}
+              className="md:hidden fixed top-16 left-3 z-30 flex items-center gap-1.5 px-3 py-1.5 bg-white/95 backdrop-blur-xs border border-slate-200 text-slate-800 rounded-full shadow-elevated text-xs font-semibold hover:bg-slate-50 transition-all cursor-pointer"
+              title="Open Document Editor"
+            >
+              <BookOpen size={14} className="text-blue-600" />
+              <span>Document</span>
+            </button>
+          )}
         </main>
 
         <PropertiesPanel

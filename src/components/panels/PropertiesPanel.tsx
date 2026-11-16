@@ -94,7 +94,14 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
   const selectedEdge = currentProject.edges.find(e => e.id === selectedEdgeId);
 
   return (
-    <div className="w-80 bg-white border-l border-slate-200 flex flex-col h-full shadow-subtle z-10 overflow-y-auto">
+    <>
+      {/* Mobile backdrop */}
+      <div
+        onClick={onClose}
+        className="fixed inset-0 z-30 bg-slate-900/40 backdrop-blur-xs lg:hidden"
+      />
+
+      <div className="fixed inset-y-0 right-0 z-40 w-[90vw] max-w-sm sm:w-80 lg:relative lg:inset-auto lg:z-10 bg-white border-l border-slate-200 flex flex-col h-full shadow-elevated lg:shadow-subtle overflow-y-auto">
       {/* Panel Header */}
       <div className="p-4 border-b border-slate-100 flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -684,5 +691,6 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
         )}
       </div>
     </div>
+    </>
   );
 };

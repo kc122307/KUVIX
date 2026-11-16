@@ -126,7 +126,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
 
   if (isCollapsed) {
     return (
-      <div className="w-12 bg-white border-r border-slate-200 flex flex-col items-center py-4 justify-between transition-all duration-300 z-10 shadow-xs">
+      <div className="hidden md:flex w-12 bg-white border-r border-slate-200 flex-col items-center py-4 justify-between transition-all duration-300 z-10 shadow-xs">
         <button
           onClick={onToggleCollapse}
           className="p-2 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-slate-900 transition-colors"
@@ -151,7 +151,14 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
   }
 
   return (
-    <div className="w-96 bg-white border-r border-slate-200 flex flex-col h-full transition-all duration-300 z-10 shadow-subtle">
+    <>
+      {/* Mobile Backdrop */}
+      <div
+        onClick={onToggleCollapse}
+        className="fixed inset-0 z-30 bg-slate-900/40 backdrop-blur-xs md:hidden"
+      />
+
+      <div className="fixed inset-y-0 left-0 z-40 w-[90vw] max-w-sm sm:w-96 md:relative md:inset-auto md:z-10 bg-white border-r border-slate-200 flex flex-col h-full transition-all duration-300 shadow-elevated md:shadow-subtle">
       {/* Editor Header */}
       <div className="p-4 border-b border-slate-100 flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -353,5 +360,6 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
         </button>
       </div>
     </div>
+    </>
   );
 };

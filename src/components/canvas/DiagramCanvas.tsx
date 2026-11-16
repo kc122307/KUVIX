@@ -153,56 +153,59 @@ export const DiagramCanvas: React.FC<DiagramCanvasProps> = ({ canvasRef }) => {
         <MiniMap
           nodeColor={theme.accent}
           maskColor="rgba(240, 244, 248, 0.6)"
-          className="!bg-white/90 !border !border-slate-200 !rounded-xl !shadow-subtle backdrop-blur-xs"
+          className="!hidden md:!block !bg-white/90 !border !border-slate-200 !rounded-xl !shadow-subtle backdrop-blur-xs"
           zoomable
           pannable
         />
       </ReactFlow>
 
       {/* Floating Canvas Quick Actions Dock */}
-      <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-20 flex items-center gap-1.5 p-1.5 bg-white/95 backdrop-blur-md border border-slate-200/80 shadow-elevated rounded-2xl no-export">
+      <div className="absolute bottom-4 sm:bottom-6 left-1/2 transform -translate-x-1/2 z-20 flex items-center gap-1 sm:gap-1.5 p-1.5 bg-white/95 backdrop-blur-md border border-slate-200/80 shadow-elevated rounded-2xl max-w-[94vw] overflow-x-auto scrollbar-none no-export">
         <button
           onClick={addNewNode}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow-xs hover:shadow-glow transition-all"
+          className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow-xs hover:shadow-glow transition-all shrink-0"
           title="Add a new node to canvas"
         >
           <Plus size={14} />
-          <span>Add Node</span>
+          <span className="hidden xs:inline">Add Node</span>
+          <span className="xs:hidden">Node</span>
         </button>
 
         <button
           onClick={addStickyNote}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded-xl text-xs font-semibold transition-all"
+          className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded-xl text-xs font-semibold transition-all shrink-0"
           title="Add sticky note annotation"
         >
           <StickyNote size={14} className="text-amber-600" />
-          <span>Sticky Note</span>
+          <span className="hidden xs:inline">Sticky Note</span>
+          <span className="xs:hidden">Note</span>
         </button>
 
-        <div className="w-px h-5 bg-slate-200 mx-1" />
+        <div className="w-px h-5 bg-slate-200 mx-0.5 sm:mx-1 shrink-0" />
 
         <button
           onClick={() => realignLayout('LR')}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 hover:bg-slate-100 text-slate-700 rounded-xl text-xs font-medium transition-all"
+          className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1.5 hover:bg-slate-100 text-slate-700 rounded-xl text-xs font-medium transition-all shrink-0"
           title="Auto arrange diagram layout"
         >
           <Sparkles size={14} className="text-blue-600" />
-          <span>Auto Layout</span>
+          <span className="hidden xs:inline">Auto Layout</span>
+          <span className="xs:hidden">Layout</span>
         </button>
 
         {selectedNodeId && (
           <>
-            <div className="w-px h-5 bg-slate-200 mx-1" />
+            <div className="w-px h-5 bg-slate-200 mx-0.5 sm:mx-1 shrink-0" />
             <button
               onClick={() => duplicateNode(selectedNodeId)}
-              className="p-1.5 hover:bg-slate-100 text-slate-600 hover:text-slate-900 rounded-lg transition-colors"
+              className="p-1.5 hover:bg-slate-100 text-slate-600 hover:text-slate-900 rounded-lg transition-colors shrink-0"
               title="Duplicate selected element (Ctrl+D)"
             >
               <Copy size={14} />
             </button>
             <button
               onClick={deleteSelected}
-              className="p-1.5 hover:bg-red-50 text-slate-600 hover:text-red-600 rounded-lg transition-colors"
+              className="p-1.5 hover:bg-red-50 text-slate-600 hover:text-red-600 rounded-lg transition-colors shrink-0"
               title="Delete selected element (Del)"
             >
               <Trash2 size={14} />

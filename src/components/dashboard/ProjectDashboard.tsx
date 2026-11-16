@@ -84,65 +84,67 @@ export const ProjectDashboard: React.FC = () => {
   return (
     <div className="h-screen w-full bg-slate-50 flex flex-col font-sans overflow-y-auto">
       {/* Top Navigation */}
-      <header className="h-16 bg-white/95 backdrop-blur-xs border-b border-slate-200 px-6 flex items-center justify-between shadow-xs sticky top-0 z-20 shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-glow">
-            <Zap size={20} className="fill-current text-amber-300" />
+      <header className="h-16 bg-white/95 backdrop-blur-xs border-b border-slate-200 px-3.5 sm:px-6 flex items-center justify-between shadow-xs sticky top-0 z-20 shrink-0">
+        <div className="flex items-center gap-2.5 sm:gap-3">
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-glow shrink-0">
+            <Zap size={18} className="fill-current text-amber-300" />
           </div>
           <div>
-            <h1 className="text-base font-bold text-slate-900 leading-none">KUVIX</h1>
-            <span className="text-xs text-blue-600 font-medium">Words into worlds.</span>
+            <h1 className="text-sm sm:text-base font-bold text-slate-900 leading-none">KUVIX</h1>
+            <span className="text-[11px] sm:text-xs text-blue-600 font-medium">Words into worlds.</span>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           {currentProject && (
             <button
               onClick={() => setActiveView('editor')}
-              className="flex items-center gap-1.5 px-3.5 py-2 border border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-semibold shadow-xs transition-all"
+              className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-2 border border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-semibold shadow-xs transition-all"
               title="Return to the active canvas editor"
             >
               <LayoutDashboard size={15} className="text-blue-600" />
-              <span>Back to Editor</span>
+              <span className="hidden xs:inline">Back to Editor</span>
+              <span className="xs:hidden">Editor</span>
             </button>
           )}
           <button
             onClick={() => createNewProject('Untitled Visual Diagram')}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow-subtle hover:shadow-glow transition-all"
+            className="flex items-center gap-1.5 px-3 sm:px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow-subtle hover:shadow-glow transition-all"
           >
-            <Plus size={16} />
-            <span>Create New Visual</span>
+            <Plus size={15} />
+            <span className="hidden xs:inline">Create New Visual</span>
+            <span className="xs:hidden">New</span>
           </button>
         </div>
       </header>
 
       {/* Main Dashboard Content */}
-      <main className="max-w-6xl w-full mx-auto p-6 md:p-8 pb-20 flex-1 space-y-8">
+      <main className="max-w-6xl w-full mx-auto p-4 sm:p-6 md:p-8 pb-16 sm:pb-20 flex-1 space-y-6 sm:space-y-8">
         {/* Banner Section */}
-        <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 rounded-3xl p-8 text-white shadow-elevated relative overflow-hidden">
+        <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 rounded-2xl sm:rounded-3xl p-5 sm:p-8 text-white shadow-elevated relative overflow-hidden">
           <div className="relative z-10 max-w-xl">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/20 backdrop-blur-xs rounded-full text-xs font-medium text-blue-100 mb-3">
               <Sparkles size={13} className="text-amber-300" />
               <span>Content-First Visual Generation</span>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight mb-2">
+            <h2 className="text-xl sm:text-3xl font-extrabold tracking-tight mb-2">
               Words into worlds.
             </h2>
-            <p className="text-blue-100 text-sm leading-relaxed mb-6">
+            <p className="text-blue-100 text-xs sm:text-sm leading-relaxed mb-5 sm:mb-6">
               Paste paragraphs, meeting logs, technical architectures, or strategic roadmaps. KUVIX parses structure and generates stunning interactive diagrams.
             </p>
-            <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex flex-col xs:flex-row items-stretch xs:items-center gap-2.5 sm:gap-3 flex-wrap">
               <button
                 onClick={() => setIsPromptGeneratorOpen(true)}
-                className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white rounded-xl text-xs font-bold shadow-lg shadow-purple-900/30 transition-all cursor-pointer"
+                className="flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white rounded-xl text-xs font-bold shadow-lg shadow-purple-900/30 transition-all cursor-pointer"
               >
-                <Sparkles size={16} className="text-amber-300" />
+                <Sparkles size={15} className="text-amber-300" />
                 <span>Generate From Prompt (Groq AI)</span>
               </button>
 
               <button
                 onClick={() => createNewProject('New Visual Journey')}
-                className="flex items-center gap-2 px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-xl text-xs font-semibold backdrop-blur-xs transition-all"
+                className="flex items-center justify-center gap-2 px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-xl text-xs font-semibold backdrop-blur-xs transition-all"
               >
                 <Plus size={15} />
                 <span>Blank Canvas</span>
