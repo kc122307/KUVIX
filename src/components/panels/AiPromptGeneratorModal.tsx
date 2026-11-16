@@ -274,24 +274,24 @@ export const AiPromptGeneratorModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/70 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden text-slate-100">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-900/40 backdrop-blur-xs animate-in fade-in duration-200">
+      <div className="bg-white border border-slate-200 rounded-3xl shadow-2xl w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden text-slate-900">
         
-        {/* Top Header & Category Tabs (Matching Reference Image) */}
-        <div className="border-b border-slate-800/80 px-4 sm:px-6 pt-5 pb-3">
+        {/* Top Header & Category Tabs (Clean Light Theme) */}
+        <div className="border-b border-slate-100 px-4 sm:px-6 pt-5 pb-3 bg-white">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-500 text-white flex items-center justify-center shadow-glow">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-600 text-white flex items-center justify-center shadow-glow">
                 <Zap size={18} className="fill-current text-amber-300" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h2 className="text-base font-bold text-white tracking-tight">KUVIX Structure Synthesizer</h2>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30 flex items-center gap-1">
+                  <h2 className="text-base font-bold text-slate-900 tracking-tight">KUVIX Structure Synthesizer</h2>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200 flex items-center gap-1">
                     <Sparkles size={10} /> Groq LPU AI
                   </span>
                 </div>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-500">
                   {hasGroqKey
                     ? 'Connected to Groq Llama 3.3 70B high-speed inference'
                     : 'Operating with intelligent local engine • Add your Groq API key in Settings for cloud models'}
@@ -301,7 +301,7 @@ export const AiPromptGeneratorModal: React.FC = () => {
 
             <button
               onClick={() => setIsPromptGeneratorOpen(false)}
-              className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-colors"
+              className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors"
             >
               <X size={18} />
             </button>
@@ -319,10 +319,10 @@ export const AiPromptGeneratorModal: React.FC = () => {
                   className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
                     isActive
                       ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md shadow-purple-500/20'
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 bg-slate-50 border border-slate-200/80'
                   }`}
                 >
-                  <IconComp size={14} className={isActive ? 'text-amber-300' : 'text-slate-400'} />
+                  <IconComp size={14} className={isActive ? 'text-amber-300' : 'text-slate-500'} />
                   <span>{cat.label}</span>
                 </button>
               );
@@ -331,21 +331,21 @@ export const AiPromptGeneratorModal: React.FC = () => {
         </div>
 
         {/* Main Body: Two-Column Split (Left Generator, Right Visual Blueprint) */}
-        <div className="flex-1 overflow-y-auto grid grid-cols-1 lg:grid-cols-12 gap-6 p-5 sm:p-6 bg-gradient-to-b from-slate-900 to-slate-950">
+        <div className="flex-1 overflow-y-auto grid grid-cols-1 lg:grid-cols-12 gap-6 p-5 sm:p-6 bg-slate-50/70">
           
           {/* Left Column: Generator Form & Example Prompts */}
           <div className="lg:col-span-7 flex flex-col space-y-5">
             {/* Generator Hero Card */}
-            <div className="bg-slate-800/50 border border-slate-700/60 rounded-2xl p-5 relative overflow-hidden backdrop-blur-sm">
-              <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30 mb-2">
+            <div className="bg-white border border-purple-100 rounded-2xl p-5 relative overflow-hidden shadow-xs ring-1 ring-purple-50">
+              <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200 mb-2">
                 <span>AI-Powered</span>
-                <Sparkles size={11} className="text-amber-300" />
+                <Sparkles size={11} className="text-amber-500" />
               </div>
 
-              <h3 className="text-xl font-extrabold text-white tracking-tight mb-1.5">
+              <h3 className="text-xl font-extrabold text-slate-900 tracking-tight mb-1.5">
                 Diagram & Flowchart Generator
               </h3>
-              <p className="text-xs text-slate-400 leading-relaxed mb-4">
+              <p className="text-xs text-slate-500 leading-relaxed mb-4">
                 Enter any one sentence to produce a complete visual diagram, automatically structure concepts, steps, and decision gates, and open directly on your interactive canvas.
               </p>
 
@@ -359,14 +359,14 @@ export const AiPromptGeneratorModal: React.FC = () => {
                     if (e.key === 'Enter') handleGenerate();
                   }}
                   placeholder="Please generate a flowchart for..."
-                  className="w-full bg-slate-950/80 border border-purple-500/40 rounded-xl pl-4 pr-12 py-3 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-400 shadow-inner"
+                  className="w-full bg-slate-50/80 border border-purple-200 rounded-xl pl-4 pr-12 py-3 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 shadow-xs focus:bg-white transition-all"
                   disabled={isGenerating}
                 />
 
                 <button
                   onClick={() => handleGenerate()}
                   disabled={!promptInput.trim() || isGenerating}
-                  className="absolute right-2 p-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:opacity-40 text-white rounded-lg shadow-md transition-all flex items-center justify-center cursor-pointer"
+                  className="absolute right-2 p-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 disabled:opacity-40 text-white rounded-lg shadow-md transition-all flex items-center justify-center cursor-pointer"
                   title="Generate Structure"
                 >
                   {isGenerating ? (
@@ -381,14 +381,14 @@ export const AiPromptGeneratorModal: React.FC = () => {
             {/* Example Prompts Grid with Shuffle */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                  <Sparkles size={13} className="text-purple-400" />
+                <span className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                  <Sparkles size={13} className="text-purple-600" />
                   Example Prompts
                 </span>
 
                 <button
                   onClick={() => setShuffleSeed(prev => prev + 1)}
-                  className="flex items-center gap-1 text-[11px] font-semibold text-purple-400 hover:text-purple-300 bg-purple-500/10 hover:bg-purple-500/20 px-2.5 py-1 rounded-lg border border-purple-500/20 transition-colors"
+                  className="flex items-center gap-1 text-[11px] font-semibold text-purple-700 hover:text-purple-800 bg-purple-50 hover:bg-purple-100 px-2.5 py-1 rounded-lg border border-purple-200 transition-colors"
                 >
                   <Shuffle size={12} />
                   <span>Shuffle</span>
@@ -407,18 +407,18 @@ export const AiPromptGeneratorModal: React.FC = () => {
                         handleGenerate(preset.text);
                       }}
                       disabled={isGenerating}
-                      className="group p-3 bg-slate-800/40 hover:bg-purple-900/20 border border-slate-700/50 hover:border-purple-500/40 rounded-xl text-left transition-all flex items-center justify-between gap-2.5"
+                      className="group p-3 bg-white hover:bg-purple-50/50 border border-slate-200 hover:border-purple-300 rounded-xl text-left transition-all shadow-xs hover:shadow-subtle flex items-center justify-between gap-2.5"
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="w-7 h-7 rounded-lg bg-slate-700/50 group-hover:bg-purple-600/30 text-purple-400 flex items-center justify-center shrink-0 transition-colors">
+                        <div className="w-7 h-7 rounded-lg bg-purple-50 group-hover:bg-purple-100 text-purple-600 flex items-center justify-center shrink-0 transition-colors">
                           <IconComponent size={14} />
                         </div>
-                        <span className="text-xs text-slate-300 group-hover:text-white line-clamp-2 leading-snug">
+                        <span className="text-xs text-slate-700 group-hover:text-purple-900 line-clamp-2 leading-snug font-medium">
                           {preset.text}
                         </span>
                       </div>
 
-                      <div className="w-5 h-5 rounded-md bg-slate-700/40 group-hover:bg-purple-600 group-hover:text-white text-slate-400 flex items-center justify-center text-xs shrink-0 transition-colors">
+                      <div className="w-5 h-5 rounded-md bg-slate-100 group-hover:bg-purple-600 group-hover:text-white text-slate-500 flex items-center justify-center text-xs shrink-0 transition-colors">
                         +
                       </div>
                     </button>
@@ -429,13 +429,13 @@ export const AiPromptGeneratorModal: React.FC = () => {
           </div>
 
           {/* Right Column: Live Visual Topology Blueprint */}
-          <div className="lg:col-span-5 flex flex-col bg-slate-950/60 border border-slate-800 rounded-2xl p-5 relative overflow-hidden justify-between">
+          <div className="lg:col-span-5 flex flex-col bg-white border border-slate-200 rounded-2xl p-5 relative overflow-hidden shadow-xs justify-between">
             <div>
-              <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-800">
-                <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+              <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">
                   Visual Architecture Blueprint
                 </span>
-                <span className="text-[10px] font-mono text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded-full border border-purple-500/20">
+                <span className="text-[10px] font-mono text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-200">
                   {promptInput ? 'Custom Concept' : 'Preview Blueprint'}
                 </span>
               </div>
@@ -443,40 +443,40 @@ export const AiPromptGeneratorModal: React.FC = () => {
               {/* Animated Interactive Flow Diagram Topology Mock */}
               <div className="space-y-4 py-2">
                 <div className="flex items-center gap-2">
-                  <div className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-bold shadow-md shadow-purple-500/30">
+                  <div className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-xs font-bold shadow-md shadow-purple-500/20">
                     User Concept Request
                   </div>
-                  <div className="h-0.5 w-6 bg-slate-600" />
-                  <div className="px-3.5 py-2 rounded-xl bg-slate-800 border border-purple-500/40 text-purple-300 text-xs font-semibold">
+                  <div className="h-0.5 w-6 bg-slate-300" />
+                  <div className="px-3.5 py-2 rounded-xl bg-purple-50 border border-purple-200 text-purple-900 text-xs font-semibold">
                     Groq Intent Analysis
                   </div>
                 </div>
 
                 <div className="flex justify-center my-1">
-                  <div className="w-0.5 h-6 bg-slate-600" />
+                  <div className="w-0.5 h-6 bg-slate-300" />
                 </div>
 
                 {/* Decision Branch */}
                 <div className="flex items-center justify-center gap-3">
-                  <div className="w-24 h-24 rotate-45 bg-purple-950/70 border-2 border-purple-500 flex items-center justify-center text-center shadow-glow">
-                    <span className="-rotate-45 text-[10px] font-bold text-purple-200">
+                  <div className="w-24 h-24 rotate-45 bg-amber-50 border-2 border-amber-400 flex items-center justify-center text-center shadow-xs">
+                    <span className="-rotate-45 text-[10px] font-bold text-amber-900">
                       Decision Gate?
                     </span>
                   </div>
                 </div>
 
                 <div className="flex justify-center my-1">
-                  <div className="w-0.5 h-6 bg-slate-600" />
+                  <div className="w-0.5 h-6 bg-slate-300" />
                 </div>
 
                 {/* Sub-processes */}
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="p-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-center">
-                    <span className="text-[11px] font-semibold text-slate-300 block">Workflow Branch</span>
+                  <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-center">
+                    <span className="text-[11px] font-bold text-slate-800 block">Workflow Branch</span>
                     <span className="text-[9px] text-slate-500">Auto-connected paths</span>
                   </div>
-                  <div className="p-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-center">
-                    <span className="text-[11px] font-semibold text-slate-300 block">Deliverable Outcome</span>
+                  <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-center">
+                    <span className="text-[11px] font-bold text-slate-800 block">Deliverable Outcome</span>
                     <span className="text-[9px] text-slate-500">Live on vector canvas</span>
                   </div>
                 </div>
@@ -484,9 +484,9 @@ export const AiPromptGeneratorModal: React.FC = () => {
             </div>
 
             {/* Bottom Status & Direct Action */}
-            <div className="mt-6 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
+            <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
               <span className="flex items-center gap-1.5 text-[11px]">
-                <CheckCircle2 size={13} className="text-emerald-400" />
+                <CheckCircle2 size={13} className="text-emerald-600" />
                 Instant canvas generation
               </span>
 
@@ -496,7 +496,7 @@ export const AiPromptGeneratorModal: React.FC = () => {
                   handleGenerate('Customer onboarding decision flow with KYC verification');
                 }}
                 disabled={isGenerating}
-                className="text-purple-400 hover:text-purple-300 font-semibold text-xs hover:underline flex items-center gap-1"
+                className="text-purple-600 hover:text-purple-800 font-semibold text-xs hover:underline flex items-center gap-1"
               >
                 <span>Try Quick Demo</span>
                 <ArrowRight size={12} />
