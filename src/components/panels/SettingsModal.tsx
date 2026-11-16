@@ -52,7 +52,7 @@ export const SettingsModal: React.FC = () => {
             <label className="block text-xs font-semibold text-slate-700 mb-2">
               Processing Provider
             </label>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               <button
                 type="button"
                 onClick={() => setConfig({ ...config, provider: 'local' })}
@@ -64,10 +64,28 @@ export const SettingsModal: React.FC = () => {
               >
                 <div className="flex items-center gap-2 mb-1">
                   <Shield size={16} className="text-emerald-600" />
-                  <span className="text-xs font-bold text-slate-800">Local NLP (Default)</span>
+                  <span className="text-xs font-bold text-slate-800">Local NLP</span>
                 </div>
                 <span className="text-[11px] text-slate-500">
-                  100% Free, zero latency, works completely offline without API keys.
+                  100% Free, offline, zero API keys.
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setConfig({ ...config, provider: 'groq', model: 'llama-3.3-70b-versatile' })}
+                className={`p-3 rounded-xl border text-left flex flex-col justify-between transition-all ${
+                  config.provider === 'groq'
+                    ? 'border-purple-600 bg-purple-50/40 ring-1 ring-purple-500'
+                    : 'border-slate-200 hover:border-slate-300'
+                }`}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <Key size={16} className="text-purple-600" />
+                  <span className="text-xs font-bold text-slate-800">Groq AI (Fast)</span>
+                </div>
+                <span className="text-[11px] text-slate-500">
+                  LPU speed with Llama 3.3 70B inference.
                 </span>
               </button>
 
@@ -85,11 +103,57 @@ export const SettingsModal: React.FC = () => {
                   <span className="text-xs font-bold text-slate-800">Google Gemini</span>
                 </div>
                 <span className="text-[11px] text-slate-500">
-                  Direct Gemini 1.5/2.0 API connection for deep generative parsing.
+                  Gemini 1.5/2.0 API connection.
                 </span>
               </button>
             </div>
           </div>
+
+          {/* Conditional Groq API Key Input */}
+          {config.provider === 'groq' && (
+            <div className="space-y-3 p-3.5 bg-purple-50/40 border border-purple-200 rounded-xl animate-in fade-in">
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-semibold text-slate-700">
+                    Groq API Key
+                  </label>
+                  <a
+                    href="https://console.groq.com/keys"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[10px] text-purple-600 font-semibold hover:underline"
+                  >
+                    Get Free Key (console.groq.com) &rarr;
+                  </a>
+                </div>
+                <input
+                  type="password"
+                  placeholder="gsk_..."
+                  value={config.apiKey || ''}
+                  onChange={(e) => setConfig({ ...config, apiKey: e.target.value })}
+                  className="w-full px-3 py-1.5 text-xs border border-purple-300 rounded-lg outline-none focus:border-purple-500 bg-white"
+                />
+                <span className="text-[10px] text-slate-400 mt-1 block">
+                  Stored securely in your local browser storage. Powers instant diagram generation.
+                </span>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Groq Model
+                </label>
+                <select
+                  value={config.model || 'llama-3.3-70b-versatile'}
+                  onChange={(e) => setConfig({ ...config, model: e.target.value })}
+                  className="w-full px-3 py-1.5 text-xs border border-purple-300 rounded-lg outline-none bg-white"
+                >
+                  <option value="llama-3.3-70b-versatile">llama-3.3-70b-versatile (Recommended - High Intelligence)</option>
+                  <option value="llama-3.1-8b-instant">llama-3.1-8b-instant (Fastest Latency)</option>
+                  <option value="mixtral-8x7b-32768">mixtral-8x7b-32768 (High Context)</option>
+                </select>
+              </div>
+            </div>
+          )}
 
           {/* Conditional API Key Input */}
           {config.provider === 'gemini' && (

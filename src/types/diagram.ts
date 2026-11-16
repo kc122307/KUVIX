@@ -109,7 +109,7 @@ export interface ParsedEntity {
 }
 
 export interface AIProviderConfig {
-  provider: 'local' | 'gemini' | 'openai' | 'ollama' | 'custom';
+  provider: 'local' | 'groq' | 'gemini' | 'openai' | 'ollama' | 'custom';
   apiKey?: string;
   model?: string;
   endpoint?: string;

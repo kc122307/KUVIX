@@ -22,6 +22,7 @@ import { refineDiagramWithPrompt } from '../engine/aiRefiner';
 import { verifyAndLinkDiagramSources, applyApprovedUpdates } from '../engine/sourceVerification';
 import { transformDiagramForAudience } from '../engine/audienceTransformer';
 import { compareDocumentVersions } from '../engine/multiSourceParser';
+import { generateStructureWithAI } from '../engine/aiProvider';
 import {
   getProjects,
   saveProject,
@@ -59,6 +60,7 @@ interface DiagramStore {
   isCheckerOpen: boolean;
   isActionGeneratorOpen: boolean;
   isAudienceSelectorOpen: boolean;
+  isPromptGeneratorOpen: boolean;
   selectedEvidence: SourceEvidence | null;
   latestVersionDiff: DocumentVersionDiff | null;
   lastAiFeedback: string | null;
@@ -86,9 +88,11 @@ interface DiagramStore {
   setIsCheckerOpen: (open: boolean) => void;
   setIsActionGeneratorOpen: (open: boolean) => void;
   setIsAudienceSelectorOpen: (open: boolean) => void;
+  setIsPromptGeneratorOpen: (open: boolean) => void;
   setSelectedEvidence: (evidence: SourceEvidence | null) => void;
   setAspectRatio: (ratio: 'free' | '16:9' | '1:1' | '4:3') => void;
   generateFromSnippet: (snippet: string) => void;
+  generateFromAiPrompt: (prompt: string, category?: string) => Promise<void>;
 
   // Multi-Source & Intelligence Actions
   addSourceDocument: (doc: SourceDocument) => void;
@@ -160,6 +164,7 @@ export const useDiagramStore = create<DiagramStore>((set, get) => {
     isCheckerOpen: false,
     isActionGeneratorOpen: false,
     isAudienceSelectorOpen: false,
+    isPromptGeneratorOpen: false,
     selectedEvidence: null,
     latestVersionDiff: null,
     lastAiFeedback: null,
@@ -185,6 +190,7 @@ export const useDiagramStore = create<DiagramStore>((set, get) => {
     setIsCheckerOpen: (open) => set({ isCheckerOpen: open }),
     setIsActionGeneratorOpen: (open) => set({ isActionGeneratorOpen: open }),
     setIsAudienceSelectorOpen: (open) => set({ isAudienceSelectorOpen: open }),
+    setIsPromptGeneratorOpen: (open) => set({ isPromptGeneratorOpen: open }),
     setSelectedEvidence: (evidence) => set({ selectedEvidence: evidence, isEvidenceInspectorOpen: !!evidence }),
 
     setAspectRatio: (ratio) => {
@@ -214,6 +220,35 @@ export const useDiagramStore = create<DiagramStore>((set, get) => {
 
       get().pushHistory(verifiedNodes, generated.edges);
       saveProject(updated);
+    },
+
+    generateFromAiPrompt: async (prompt, category = 'AI diagram') => {
+      const { currentProject } = get();
+      const generated = await generateStructureWithAI(prompt, category);
+      const parsed = parseTextToDocument(generated.documentText);
+      const diagram = generateDiagramFromParsed(parsed, generated.diagramType);
+      const verifiedNodes = verifyAndLinkDiagramSources(diagram.nodes, currentProject.sources || []);
+
+      const updated = {
+        ...currentProject,
+        title: generated.title,
+        documentText: generated.documentText,
+        diagramType: generated.diagramType,
+        nodes: verifiedNodes,
+        edges: diagram.edges
+      };
+
+      set({
+        currentProject: updated,
+        selectedNodeId: null,
+        isPromptGeneratorOpen: false,
+        activeView: 'editor',
+        lastAiFeedback: `Groq AI synthesized "${generated.title}" (${generated.stepsCount} steps, ${generated.diagramType})`
+      });
+
+      get().pushHistory(verifiedNodes, diagram.edges);
+      saveProject(updated);
+      set({ projects: getProjects() });
     },
 
     pushHistory: (nodes, edges) => {

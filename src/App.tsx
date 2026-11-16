@@ -17,6 +17,7 @@ import { IntentAnalysisModal } from './components/intent/IntentAnalysisModal';
 import { DiagramCheckerModal } from './components/panels/DiagramCheckerModal';
 import { ActionGeneratorModal } from './components/panels/ActionGeneratorModal';
 import { AudienceSelectorModal } from './components/panels/AudienceSelectorModal';
+import { AiPromptGeneratorModal } from './components/panels/AiPromptGeneratorModal';
 
 export function App() {
   const { activeView } = useDiagramStore();
@@ -26,7 +27,12 @@ export function App() {
   const canvasRef = useRef<HTMLDivElement>(null);
 
   if (activeView === 'dashboard') {
-    return <ProjectDashboard />;
+    return (
+      <>
+        <ProjectDashboard />
+        <AiPromptGeneratorModal />
+      </>
+    );
   }
 
   return (
@@ -66,6 +72,7 @@ export function App() {
       <DiagramCheckerModal />
       <ActionGeneratorModal />
       <AudienceSelectorModal />
+      <AiPromptGeneratorModal />
       <ExportModal canvasElement={canvasRef.current} />
     </div>
   );

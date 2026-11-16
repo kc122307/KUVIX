@@ -72,6 +72,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
     addSourceDocument,
     setIsSourceManagerOpen,
     setIsIntentAnalysisOpen,
+    setIsPromptGeneratorOpen,
     currentProject: { diagramType }
   } = useDiagramStore();
 
@@ -236,8 +237,17 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
               </div>
             )}
 
-            {/* Napkin Autospark Overlay Button */}
+            {/* AI Prompt & Autospark Overlay Buttons */}
             <div className="absolute bottom-3 right-3 flex items-center gap-1.5">
+              <button
+                onClick={() => setIsPromptGeneratorOpen(true)}
+                className="group flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg text-xs font-semibold shadow-md hover:shadow-glow transition-all"
+                title="AI Prompt - Synthesize diagram from one sentence via Groq AI"
+              >
+                <Sparkles size={13} className="text-amber-300 group-hover:scale-110 transition-transform" />
+                <span>AI Prompt</span>
+              </button>
+
               <button
                 onClick={() => setIsSuggestionsOpen(true)}
                 className="group flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow-md hover:shadow-glow transition-all"

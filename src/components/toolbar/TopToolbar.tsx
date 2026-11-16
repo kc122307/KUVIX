@@ -14,7 +14,8 @@ import {
   Maximize,
   Share2,
   Compass,
-  ShieldCheck
+  ShieldCheck,
+  Wand2
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { useDiagramStore } from '../../store/useDiagramStore';
@@ -45,6 +46,7 @@ export const TopToolbar: React.FC<TopToolbarProps> = ({
     setIsPresentationOpen,
     setIsIntentAnalysisOpen,
     setIsCheckerOpen,
+    setIsPromptGeneratorOpen,
     setAspectRatio,
     lastAiFeedback
   } = useDiagramStore();
@@ -236,6 +238,16 @@ export const TopToolbar: React.FC<TopToolbarProps> = ({
           >
             <Sparkles size={14} className="fill-current text-amber-300" />
             <span className="hidden sm:inline">AI Refine</span>
+          </button>
+
+          {/* AI Prompt-to-Structure Synthesizer */}
+          <button
+            onClick={() => setIsPromptGeneratorOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-lg text-xs font-semibold shadow-xs hover:shadow-glow transition-all shrink-0 cursor-pointer"
+            title="AI Prompt-to-Diagram: Synthesize complete structure from one sentence with Groq AI"
+          >
+            <Wand2 size={14} className="text-amber-300" />
+            <span className="hidden sm:inline">AI Create</span>
           </button>
         </div>
       </div>

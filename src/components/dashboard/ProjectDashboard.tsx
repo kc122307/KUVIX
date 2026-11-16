@@ -60,7 +60,8 @@ export const ProjectDashboard: React.FC = () => {
     createNewProject,
     deleteProject,
     duplicateProject,
-    setActiveView
+    setActiveView,
+    setIsPromptGeneratorOpen
   } = useDiagramStore();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -130,13 +131,23 @@ export const ProjectDashboard: React.FC = () => {
             <p className="text-blue-100 text-sm leading-relaxed mb-6">
               Paste paragraphs, meeting logs, technical architectures, or strategic roadmaps. KUVIX parses structure and generates stunning interactive diagrams.
             </p>
-            <button
-              onClick={() => createNewProject('New Product Workflow')}
-              className="flex items-center gap-2 px-5 py-2.5 bg-white text-blue-700 hover:bg-blue-50 rounded-xl text-xs font-bold shadow-md transition-all"
-            >
-              <Zap size={16} className="fill-current text-amber-400" />
-              <span>Generate From Text</span>
-            </button>
+            <div className="flex items-center gap-3 flex-wrap">
+              <button
+                onClick={() => setIsPromptGeneratorOpen(true)}
+                className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white rounded-xl text-xs font-bold shadow-lg shadow-purple-900/30 transition-all cursor-pointer"
+              >
+                <Sparkles size={16} className="text-amber-300" />
+                <span>Generate From Prompt (Groq AI)</span>
+              </button>
+
+              <button
+                onClick={() => createNewProject('New Visual Journey')}
+                className="flex items-center gap-2 px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-xl text-xs font-semibold backdrop-blur-xs transition-all"
+              >
+                <Plus size={15} />
+                <span>Blank Canvas</span>
+              </button>
+            </div>
           </div>
 
           {/* Decorative Background Circles */}
