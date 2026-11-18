@@ -295,7 +295,7 @@ export const AiPromptGeneratorModal: React.FC = () => {
                 </div>
                 <p className="text-[11px] sm:text-xs text-slate-500 truncate">
                   {hasGroqKey
-                    ? 'Connected to Groq Llama 3.3 70B high-speed inference'
+                    ? `Connected to Groq LPU AI (${config.model || 'openai/gpt-oss-120b'}) inference`
                     : 'Operating with intelligent local engine • Add your Groq API key in Settings for cloud models'}
                 </p>
               </div>

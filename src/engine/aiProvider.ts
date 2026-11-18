@@ -23,6 +23,16 @@ export interface RefineResult {
   edges: AppEdge[];
 }
 
+export const DEFAULT_GROQ_MODEL = 'openai/gpt-oss-120b';
+
+export const GROQ_CANDIDATE_MODELS = [
+  'openai/gpt-oss-120b',
+  'openai/gpt-oss-20b',
+  'qwen/qwen3.8-27b',
+  'llama-3.3-70b-versatile',
+  'llama-3.1-8b-instant'
+];
+
 export function getStoredAIConfig(): AIProviderConfig {
   const envGroqKey = (import.meta.env.VITE_GROQ_API_KEY as string | undefined)?.trim();
   try {
@@ -35,6 +45,10 @@ export function getStoredAIConfig(): AIProviderConfig {
           parsed.provider = 'groq';
         }
       }
+      // Upgrade stale or non-existent default model
+      if (!parsed.model || parsed.model === 'llama-3.3-70b-versatile') {
+        parsed.model = DEFAULT_GROQ_MODEL;
+      }
       return parsed;
     }
   } catch (err) {
@@ -44,19 +58,75 @@ export function getStoredAIConfig(): AIProviderConfig {
   if (envGroqKey) {
     return {
       provider: 'groq',
-      model: 'llama-3.3-70b-versatile',
+      model: DEFAULT_GROQ_MODEL,
       apiKey: envGroqKey
     };
   }
 
   return {
     provider: 'local',
-    model: 'llama-3.3-70b-versatile'
+    model: DEFAULT_GROQ_MODEL
   };
 }
 
 export function saveAIConfig(config: AIProviderConfig): void {
   localStorage.setItem(AI_CONFIG_KEY, JSON.stringify(config));
+}
+
+/**
+ * Robust Groq caller that cycles through candidate models if one fails or is not available
+ */
+async function callGroqChatCompletion(
+  apiKey: string,
+  preferredModel: string,
+  messages: Array<{ role: string; content: string }>,
+  responseFormat?: { type: 'json_object' }
+): Promise<{ data: any; contentStr: string; modelUsed: string }> {
+  const modelsToTry = [
+    preferredModel,
+    ...GROQ_CANDIDATE_MODELS.filter(m => m !== preferredModel)
+  ];
+
+  let lastError: any = null;
+
+  for (const model of modelsToTry) {
+    try {
+      const bodyPayload: any = {
+        model,
+        messages,
+        temperature: 0.3
+      };
+      if (responseFormat) {
+        bodyPayload.response_format = responseFormat;
+      }
+
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(bodyPayload)
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const contentStr = data.choices?.[0]?.message?.content;
+        if (contentStr) {
+          return { data, contentStr, modelUsed: model };
+        }
+      } else {
+        const errJson = await response.json().catch(() => null);
+        console.warn(`Groq model ${model} failed with HTTP ${response.status}:`, errJson?.error?.message || response.statusText);
+        lastError = errJson;
+      }
+    } catch (err) {
+      console.warn(`Groq request with model ${model} failed:`, err);
+      lastError = err;
+    }
+  }
+
+  throw new Error(lastError?.error?.message || 'All Groq models failed to respond');
 }
 
 /**
@@ -77,7 +147,7 @@ export async function generateStructureWithAI(
   // 1. Try Groq AI if key is provided or configured
   if (groqApiKey) {
     try {
-      const model = config.model || 'llama-3.3-70b-versatile';
+      const preferredModel = config.model || DEFAULT_GROQ_MODEL;
       const systemInstruction = `You are KUVIX AI, an expert diagram architect.
 Your mission: Given the user's concept, request, or single sentence (in category "${category}"), deeply understand the domain context and generate a comprehensive visual diagram structure with rich, detailed source text.
 
@@ -112,30 +182,19 @@ Requirements:
 - Ensure descriptions are detailed, informative, and specific to the user's prompt (avoid vague placeholders).
 - If there is conditional logic, validation, or an approval gate, set isDecision: true and end the title with a question mark (e.g. 'Security Audit Passed?').`;
 
-      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${groqApiKey}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          model,
-          messages: [
-            { role: 'system', content: systemInstruction },
-            { role: 'user', content: cleanPrompt }
-          ],
-          temperature: 0.3,
-          response_format: { type: 'json_object' }
-        })
-      });
+      const { contentStr, modelUsed } = await callGroqChatCompletion(
+        groqApiKey,
+        preferredModel,
+        [
+          { role: 'system', content: systemInstruction },
+          { role: 'user', content: cleanPrompt }
+        ],
+        { type: 'json_object' }
+      );
 
-      if (response.ok) {
-        const data = await response.json();
-        const contentStr = data.choices?.[0]?.message?.content;
-        if (contentStr) {
-          const parsed = JSON.parse(contentStr);
-          if (parsed && parsed.steps && Array.isArray(parsed.steps)) {
-            const docMarkdown = `# ${parsed.title || cleanPrompt}
+      const parsed = JSON.parse(contentStr);
+      if (parsed && parsed.steps && Array.isArray(parsed.steps)) {
+        const docMarkdown = `# ${parsed.title || cleanPrompt}
 ${parsed.summary || `Visual structure generated from: "${cleanPrompt}"`}
 
 ${parsed.steps.map((s: { stepNumber?: number; title: string; description: string; isDecision?: boolean }, idx: number) => {
@@ -145,20 +204,16 @@ ${parsed.steps.map((s: { stepNumber?: number; title: string; description: string
   return `${num}. ${title}${isQuestion && !title.includes('?') ? '?' : ''} - ${s.description}`;
 }).join('\n')}
 `;
-            return {
-              title: parsed.title || cleanPrompt,
-              diagramType: (parsed.diagramType as DiagramType) || 'flowchart',
-              documentText: docMarkdown,
-              summary: parsed.summary || `Generated ${parsed.steps.length} steps for "${cleanPrompt}"`,
-              stepsCount: parsed.steps.length
-            };
-          }
-        }
-      } else {
-        console.warn(`Groq API returned HTTP ${response.status}. Falling back to local smart synthesis.`);
+        return {
+          title: parsed.title || cleanPrompt,
+          diagramType: (parsed.diagramType as DiagramType) || 'flowchart',
+          documentText: docMarkdown,
+          summary: parsed.summary || `Generated ${parsed.steps.length} steps for "${cleanPrompt}" (${modelUsed})`,
+          stepsCount: parsed.steps.length
+        };
       }
     } catch (err) {
-      console.warn('Groq API invocation failed, falling back to local synthesis:', err);
+      console.warn('Groq API invocation failed across all candidate models, falling back to local synthesis:', err);
     }
   }
 
@@ -251,15 +306,34 @@ function generateLocalSmartStructure(prompt: string, category: string): Generate
       { title: 'Valuation & Multiple Check?', desc: 'Stress-test forward P/E ratios against free cash flow yield', isDecision: true },
       { title: 'Portfolio Allocation Strategy', desc: 'Rebalance risk exposure with defensive hedges and systematic profit-taking' }
     ];
-  } else {
-    // Universal structured workflow generator
+  } else if (lower.includes('dance') || lower.includes('dancing') || lower.includes('ballet') || lower.includes('salsa') || lower.includes('hip hop') || lower.includes('rhythm')) {
+    diagramType = 'timeline';
     steps = [
-      { title: 'Initiation & Discovery', desc: `Define core scope, stakeholder objectives, and success metrics for ${cleanTitle}` },
-      { title: 'Architecture & Design Specification', desc: 'Formulate detailed blueprints, system dependencies, and execution milestones' },
-      { title: 'Feasibility Review Passed?', desc: 'Validate technical constraints, budget allocations, and compliance standards', isDecision: true },
-      { title: 'Core Implementation Sprint', desc: 'Build foundational deliverables with iterative validation checkpoints' },
-      { title: 'Quality Assurance & Telemetry', desc: 'Conduct end-to-end stress testing, user acceptance review, and latency profiling' },
-      { title: 'Operational Launch & Retrospective', desc: 'Ship production release and monitor ongoing adoption analytics' }
+      { title: 'Month 1: Rhythm & Foundational Footwork', desc: 'Master basic musical counts, foot tap patterns, balance alignment, and foundational posture drills' },
+      { title: 'Signature Style Movements', desc: 'Select core dance style (contemporary, hip-hop, salsa, or ballroom) and practice signature groove isolations' },
+      { title: 'Rhythm Sync Validated?', desc: 'Record practice routine with musical playback to review timing accuracy, weight transitions, and posture', isDecision: true },
+      { title: 'Month 2: Dynamic Combinations', desc: 'Synthesize complex upper-body fluid arm gestures with dynamic footwork combinations and turns' },
+      { title: 'Month 3: Full Choreography Staging', desc: 'Execute multi-phrase 32-count choreography routine focusing on musicality, dynamics, and emotional expression' },
+      { title: 'Showcase Performance & Milestones', desc: 'Perform completed showcase routine for instructor critique or video recording, setting future mastery goals' }
+    ];
+  } else if (lower.includes('fitness') || lower.includes('workout') || lower.includes('gym') || lower.includes('marathon')) {
+    diagramType = 'timeline';
+    steps = [
+      { title: 'Baseline Assessment & Goal Setting', desc: 'Measure initial VO2 max, strength baselines, resting heart rate, and establish structured training volume' },
+      { title: 'Progressive Overload Foundation', desc: 'Execute compound movement splits with strict form, progressive load increases, and daily recovery mobility' },
+      { title: 'Recovery & Nutrition Check?', desc: 'Audit protein synthesis intake, sleep metrics, and joint readiness markers before ramping volume', isDecision: true },
+      { title: 'Peak Conditioning & Tempo Drills', desc: 'Introduce high-intensity interval training, lactate threshold intervals, and muscular endurance sets' },
+      { title: 'Target Milestone Performance', desc: 'Complete milestone test run or strength PR under simulated competition conditions' }
+    ];
+  } else {
+    // Universal structured roadmap generator adaptable to any concept
+    steps = [
+      { title: 'Foundations & Baseline Setup', desc: `Establish essential core principles, necessary resources, and measurable milestones for ${cleanTitle}` },
+      { title: 'Core Competency & Practice', desc: 'Develop fundamental techniques through daily hands-on routines and immediate corrective feedback loops' },
+      { title: 'Mid-Point Evaluation Passed?', desc: 'Assess technical precision, consistency, and benchmark execution against quality standards', isDecision: true },
+      { title: 'Advanced Combinations & Scenarios', desc: 'Integrate individual foundational elements into complex end-to-end practical workflows' },
+      { title: 'Refinement, Speed & Polish', desc: 'Eliminate friction points, hone aesthetic nuances, and build confident speed through deliberate repetition' },
+      { title: 'Mastery Demonstration & Review', desc: 'Execute comprehensive final showcase or deployment, reviewing long-term progression' }
     ];
   }
 
@@ -283,28 +357,26 @@ export async function processTextWithAI(
   config: AIProviderConfig = getStoredAIConfig()
 ): Promise<ParsedDocument> {
   const envGroqKey = (import.meta.env.VITE_GROQ_API_KEY as string | undefined)?.trim();
-  const effectiveGroqKey = (config.provider === 'groq' && config.apiKey) ? config.apiKey : envGroqKey;
+  const effectiveGroqKey = (config.provider === 'groq' && config.apiKey)
+    ? config.apiKey
+    : envGroqKey || localStorage.getItem('kuvix_groq_api_key') || (config.apiKey && config.apiKey.startsWith('gsk_') ? config.apiKey : '');
 
   // If provider is local and no env key, use our fast, deterministic NLP engine
-  if (config.provider === 'local' && !envGroqKey) {
+  if (config.provider === 'local' && !effectiveGroqKey) {
     return parseTextToDocument(text);
   }
 
   // 1. Try Groq AI if configured or env key exists
-  if ((config.provider === 'groq' || !config.provider) && effectiveGroqKey) {
+  if (effectiveGroqKey) {
     try {
-      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${effectiveGroqKey}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          model: config.model || 'llama-3.3-70b-versatile',
-          messages: [
-            {
-              role: 'system',
-              content: `Analyze this text and output a JSON visual diagram representation.
+      const preferredModel = config.model || DEFAULT_GROQ_MODEL;
+      const { contentStr } = await callGroqChatCompletion(
+        effectiveGroqKey,
+        preferredModel,
+        [
+          {
+            role: 'system',
+            content: `Analyze this text and output a JSON visual diagram representation.
 Format:
 {
   "title": "Diagram Title",
@@ -320,29 +392,24 @@ Format:
     }
   ]
 }`
-            },
-            { role: 'user', content: text }
-          ],
-          response_format: { type: 'json_object' }
-        })
-      });
+          },
+          { role: 'user', content: text }
+        ],
+        { type: 'json_object' }
+      );
 
-      if (response.ok) {
-        const data = await response.json();
-        const content = data.choices?.[0]?.message?.content;
-        if (content) {
-          const parsedJson = JSON.parse(content);
-          const localParsed = parseTextToDocument(text);
-          return {
-            title: parsedJson.title || localParsed.title,
-            dominantType: (parsedJson.dominantType as DiagramType) || localParsed.dominantType,
-            entities: parsedJson.entities || localParsed.entities,
-            suggestedVisuals: localParsed.suggestedVisuals,
-            hasDecisionLogic: localParsed.hasDecisionLogic,
-            hasTimelineData: localParsed.hasTimelineData,
-            hasHierarchicalOutline: localParsed.hasHierarchicalOutline
-          };
-        }
+      if (contentStr) {
+        const parsedJson = JSON.parse(contentStr);
+        const localParsed = parseTextToDocument(text);
+        return {
+          title: parsedJson.title || localParsed.title,
+          dominantType: (parsedJson.dominantType as DiagramType) || localParsed.dominantType,
+          entities: parsedJson.entities || localParsed.entities,
+          suggestedVisuals: localParsed.suggestedVisuals,
+          hasDecisionLogic: localParsed.hasDecisionLogic,
+          hasTimelineData: localParsed.hasTimelineData,
+          hasHierarchicalOutline: localParsed.hasHierarchicalOutline
+        };
       }
     } catch (err) {
       console.warn('Groq parsing failed, falling back to local NLP engine:', err);
@@ -437,7 +504,7 @@ export async function refineDiagramWithAI(
   // 1. Try Groq AI cloud LLM if key is configured
   if (groqApiKey) {
     try {
-      const model = config.model || 'llama-3.3-70b-versatile';
+      const preferredModel = config.model || DEFAULT_GROQ_MODEL;
       const systemInstruction = `You are KUVIX AI, an expert diagram architect and visual refiner.
 Your mission: Given an existing visual diagram and its source document, modify and refine it according to the user's instruction: "${cleanPrompt}".
 ${selectedNode ? `The user is specifically targeting the component: "${selectedNode.data.title}" (Current description: "${selectedNode.data.subtitle || ''}").` : ''}
@@ -469,32 +536,21 @@ ${currentProject.documentText}
 
 Refinement Instruction: ${cleanPrompt}`;
 
-      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${groqApiKey}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          model,
-          messages: [
-            { role: 'system', content: systemInstruction },
-            { role: 'user', content: userContent }
-          ],
-          temperature: 0.3,
-          response_format: { type: 'json_object' }
-        })
-      });
+      const { contentStr, modelUsed } = await callGroqChatCompletion(
+        groqApiKey,
+        preferredModel,
+        [
+          { role: 'system', content: systemInstruction },
+          { role: 'user', content: userContent }
+        ],
+        { type: 'json_object' }
+      );
 
-      if (response.ok) {
-        const data = await response.json();
-        const contentStr = data.choices?.[0]?.message?.content;
-        if (contentStr) {
-          const parsedJson = JSON.parse(contentStr);
-          if (parsedJson && parsedJson.steps && Array.isArray(parsedJson.steps)) {
-            const newTitle = parsedJson.title || currentProject.title;
-            const newType = (parsedJson.diagramType as DiagramType) || currentProject.diagramType;
-            const docMarkdown = `# ${newTitle}
+      const parsedJson = JSON.parse(contentStr);
+      if (parsedJson && parsedJson.steps && Array.isArray(parsedJson.steps)) {
+        const newTitle = parsedJson.title || currentProject.title;
+        const newType = (parsedJson.diagramType as DiagramType) || currentProject.diagramType;
+        const docMarkdown = `# ${newTitle}
 ${parsedJson.feedbackMessage || `Refined visual structure based on: "${cleanPrompt}"`}
 
 ${parsedJson.steps.map((s: { stepNumber?: number; title: string; description: string; isDecision?: boolean }, idx: number) => {
@@ -504,20 +560,16 @@ ${parsedJson.steps.map((s: { stepNumber?: number; title: string; description: st
   return `${num}. ${title}${isQuestion && !title.includes('?') ? '?' : ''} - ${s.description}`;
 }).join('\n')}
 `;
-            const parsedDoc = parseTextToDocument(docMarkdown);
-            const diagram = generateDiagramFromParsed(parsedDoc, newType);
-            return {
-              title: newTitle,
-              diagramType: newType,
-              documentText: docMarkdown,
-              message: parsedJson.feedbackMessage || `Applied AI refinement: "${cleanPrompt}"`,
-              nodes: diagram.nodes,
-              edges: diagram.edges
-            };
-          }
-        }
-      } else {
-        console.warn(`Groq AI refinement returned HTTP ${response.status}. Falling back to smart local refiner.`);
+        const parsedDoc = parseTextToDocument(docMarkdown);
+        const diagram = generateDiagramFromParsed(parsedDoc, newType);
+        return {
+          title: newTitle,
+          diagramType: newType,
+          documentText: docMarkdown,
+          message: parsedJson.feedbackMessage || `Applied AI refinement via ${modelUsed}: "${cleanPrompt}"`,
+          nodes: diagram.nodes,
+          edges: diagram.edges
+        };
       }
     } catch (err) {
       console.warn('Groq AI refinement failed, falling back to smart local refiner:', err);

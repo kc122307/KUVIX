@@ -152,13 +152,15 @@ export const SettingsModal: React.FC = () => {
                   Groq Model
                 </label>
                 <select
-                  value={config.model || 'llama-3.3-70b-versatile'}
+                  value={config.model || 'openai/gpt-oss-120b'}
                   onChange={(e) => setConfig({ ...config, model: e.target.value })}
-                  className="w-full px-3 py-1.5 text-xs border border-purple-300 rounded-lg outline-none bg-white"
+                  className="w-full px-3 py-1.5 text-xs border border-purple-300 rounded-lg outline-none bg-white font-medium text-slate-800"
                 >
-                  <option value="llama-3.3-70b-versatile">llama-3.3-70b-versatile (Recommended - High Intelligence)</option>
-                  <option value="llama-3.1-8b-instant">llama-3.1-8b-instant (Fastest Latency)</option>
-                  <option value="mixtral-8x7b-32768">mixtral-8x7b-32768 (High Context)</option>
+                  <option value="openai/gpt-oss-120b">openai/gpt-oss-120b (Recommended - Deep Reasoning & Domain Synthesis)</option>
+                  <option value="openai/gpt-oss-20b">openai/gpt-oss-20b (Fastest Latency & Speed)</option>
+                  <option value="qwen/qwen3.8-27b">qwen/qwen3.8-27b (High Precision Multilingual)</option>
+                  <option value="llama-3.3-70b-versatile">llama-3.3-70b-versatile (Meta Llama 3.3)</option>
+                  <option value="llama-3.1-8b-instant">llama-3.1-8b-instant (Meta Llama 3.1 Instant)</option>
                 </select>
               </div>
             </div>
