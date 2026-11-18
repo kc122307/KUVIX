@@ -198,11 +198,11 @@ Requirements:
 ${parsed.summary || `Visual structure generated from: "${cleanPrompt}"`}
 
 ${parsed.steps.map((s: { stepNumber?: number; title: string; description: string; isDecision?: boolean }, idx: number) => {
-  const num = s.stepNumber || idx + 1;
-  const isQuestion = s.isDecision || s.title.includes('?');
-  const title = s.title.replace(/^[0-9\.\s]+/, '');
-  return `${num}. ${title}${isQuestion && !title.includes('?') ? '?' : ''} - ${s.description}`;
-}).join('\n')}
+          const num = s.stepNumber || idx + 1;
+          const isQuestion = s.isDecision || s.title.includes('?');
+          const title = s.title.replace(/^[0-9\.\s]+/, '');
+          return `${num}. ${title}${isQuestion && !title.includes('?') ? '?' : ''} - ${s.description}`;
+        }).join('\n')}
 `;
         return {
           title: parsed.title || cleanPrompt,
@@ -554,11 +554,11 @@ Refinement Instruction: ${cleanPrompt}`;
 ${parsedJson.feedbackMessage || `Refined visual structure based on: "${cleanPrompt}"`}
 
 ${parsedJson.steps.map((s: { stepNumber?: number; title: string; description: string; isDecision?: boolean }, idx: number) => {
-  const num = s.stepNumber || idx + 1;
-  const isQuestion = s.isDecision || s.title.includes('?');
-  const title = s.title.replace(/^[0-9\.\s]+/, '');
-  return `${num}. ${title}${isQuestion && !title.includes('?') ? '?' : ''} - ${s.description}`;
-}).join('\n')}
+          const num = s.stepNumber || idx + 1;
+          const isQuestion = s.isDecision || s.title.includes('?');
+          const title = s.title.replace(/^[0-9\.\s]+/, '');
+          return `${num}. ${title}${isQuestion && !title.includes('?') ? '?' : ''} - ${s.description}`;
+        }).join('\n')}
 `;
         const parsedDoc = parseTextToDocument(docMarkdown);
         const diagram = generateDiagramFromParsed(parsedDoc, newType);
