@@ -1,5 +1,7 @@
-import { AIProviderConfig, DiagramType } from '../types/diagram';
+import { AIProviderConfig, DiagramType, Project, AppNode, AppEdge } from '../types/diagram';
 import { parseTextToDocument, ParsedDocument } from './nlpParser';
+import { generateDiagramFromParsed } from './diagramGenerators';
+import { refineDiagramWithPrompt } from './aiRefiner';
 
 const AI_CONFIG_KEY = 'kuvix_ai_provider_config';
 const LEGACY_AI_CONFIG_KEY = 'napkin_ai_provider_config';
@@ -10,6 +12,15 @@ export interface GeneratedStructure {
   documentText: string;
   summary: string;
   stepsCount: number;
+}
+
+export interface RefineResult {
+  title: string;
+  diagramType: DiagramType;
+  documentText: string;
+  message: string;
+  nodes: AppNode[];
+  edges: AppEdge[];
 }
 
 export function getStoredAIConfig(): AIProviderConfig {
@@ -68,7 +79,7 @@ export async function generateStructureWithAI(
     try {
       const model = config.model || 'llama-3.3-70b-versatile';
       const systemInstruction = `You are KUVIX AI, an expert diagram architect.
-Your mission: Given the user's concept, request, or single sentence (in category "${category}"), generate a comprehensive visual diagram structure.
+Your mission: Given the user's concept, request, or single sentence (in category "${category}"), deeply understand the domain context and generate a comprehensive visual diagram structure with rich, detailed source text.
 
 Analyze the intent and select the single BEST diagramType from:
 - "flowchart" (decision paths, conditional logic, approvals, branching)
@@ -84,19 +95,22 @@ Return a strictly valid JSON object matching this schema:
 {
   "title": "Clear, Professional Project Title",
   "diagramType": "flowchart" | "process" | "timeline" | "mindmap" | "cycle" | "comparison" | "infographic" | "orgchart",
-  "summary": "One sentence describing this diagram",
+  "summary": "Comprehensive 1-2 sentence overview explaining the architecture, workflow, or strategic flow",
   "steps": [
     {
       "stepNumber": 1,
       "title": "Concise Step/Node Name (2-5 words)",
-      "description": "Specific, actionable detail or explanation",
+      "description": "Thorough, actionable explanation (15-35 words) specifying what happens, the tools/protocols/actions involved, inputs/outputs, or validation criteria",
       "isDecision": false,
-      "icon": "Rocket" | "ShieldCheck" | "Database" | "Users" | "CheckCircle2" | "Target" | "GitFork" | "Search" | "Settings"
+      "icon": "Rocket" | "ShieldCheck" | "Database" | "Users" | "CheckCircle2" | "Target" | "GitFork" | "Search" | "Settings" | "Cpu" | "Server" | "Layout" | "Cloud"
     }
   ]
 }
 
-Provide 5 to 8 thorough, high-value steps that form a coherent visual diagram.`;
+Requirements:
+- Provide 5 to 8 thorough, high-value steps that form a coherent visual diagram.
+- Ensure descriptions are detailed, informative, and specific to the user's prompt (avoid vague placeholders).
+- If there is conditional logic, validation, or an approval gate, set isDecision: true and end the title with a question mark (e.g. 'Security Audit Passed?').`;
 
       const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
@@ -400,6 +414,141 @@ ${text}`
 
   // Graceful fallback to our robust local NLP parser
   return parseTextToDocument(text);
+}
+
+/**
+ * Refine an existing diagram and its source text with AI (Groq LPU LLM inference)
+ * with robust fallback to smart local rules when offline.
+ */
+export async function refineDiagramWithAI(
+  refinePrompt: string,
+  currentProject: Project,
+  selectedNodeId?: string | null,
+  config: AIProviderConfig = getStoredAIConfig()
+): Promise<RefineResult> {
+  const cleanPrompt = refinePrompt.trim();
+  const envGroqKey = (import.meta.env.VITE_GROQ_API_KEY as string | undefined)?.trim();
+  const groqApiKey = config.provider === 'groq' && config.apiKey
+    ? config.apiKey
+    : envGroqKey || localStorage.getItem('kuvix_groq_api_key') || (config.apiKey && config.apiKey.startsWith('gsk_') ? config.apiKey : '');
+
+  const selectedNode = selectedNodeId ? currentProject.nodes.find(n => n.id === selectedNodeId) : null;
+
+  // 1. Try Groq AI cloud LLM if key is configured
+  if (groqApiKey) {
+    try {
+      const model = config.model || 'llama-3.3-70b-versatile';
+      const systemInstruction = `You are KUVIX AI, an expert diagram architect and visual refiner.
+Your mission: Given an existing visual diagram and its source document, modify and refine it according to the user's instruction: "${cleanPrompt}".
+${selectedNode ? `The user is specifically targeting the component: "${selectedNode.data.title}" (Current description: "${selectedNode.data.subtitle || ''}").` : ''}
+
+Rules:
+1. Understand the intent of "${cleanPrompt}" (e.g. adding missing steps, expanding explanations, adding failover/error handling, changing the diagram layout type, translating, adding approval gates, or detailing technologies).
+2. Update the steps and descriptions so they are thorough, realistic, and specific (15-35 words per step description).
+3. Select the best diagramType from: "flowchart", "process", "timeline", "mindmap", "cycle", "comparison", "infographic", "orgchart".
+4. Return a strictly valid JSON matching this schema:
+{
+  "title": "Clear Diagram Title",
+  "diagramType": "flowchart" | "process" | "timeline" | "mindmap" | "cycle" | "comparison" | "infographic" | "orgchart",
+  "feedbackMessage": "Short description of what was updated (e.g. 'Added QA & canary deployment stages and enhanced component descriptions.')",
+  "steps": [
+    {
+      "stepNumber": 1,
+      "title": "Concise Step Title",
+      "description": "Rich, detailed explanation of what happens here",
+      "isDecision": false,
+      "icon": "Rocket" | "ShieldCheck" | "Database" | "Users" | "CheckCircle2" | "Target" | "GitFork" | "Search" | "Settings" | "Cpu" | "Server" | "Layout" | "Cloud"
+    }
+  ]
+}`;
+
+      const userContent = `Current Project Title: ${currentProject.title}
+Current Diagram Type: ${currentProject.diagramType}
+Current Source Document:
+${currentProject.documentText}
+
+Refinement Instruction: ${cleanPrompt}`;
+
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${groqApiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: 'system', content: systemInstruction },
+            { role: 'user', content: userContent }
+          ],
+          temperature: 0.3,
+          response_format: { type: 'json_object' }
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const contentStr = data.choices?.[0]?.message?.content;
+        if (contentStr) {
+          const parsedJson = JSON.parse(contentStr);
+          if (parsedJson && parsedJson.steps && Array.isArray(parsedJson.steps)) {
+            const newTitle = parsedJson.title || currentProject.title;
+            const newType = (parsedJson.diagramType as DiagramType) || currentProject.diagramType;
+            const docMarkdown = `# ${newTitle}
+${parsedJson.feedbackMessage || `Refined visual structure based on: "${cleanPrompt}"`}
+
+${parsedJson.steps.map((s: { stepNumber?: number; title: string; description: string; isDecision?: boolean }, idx: number) => {
+  const num = s.stepNumber || idx + 1;
+  const isQuestion = s.isDecision || s.title.includes('?');
+  const title = s.title.replace(/^[0-9\.\s]+/, '');
+  return `${num}. ${title}${isQuestion && !title.includes('?') ? '?' : ''} - ${s.description}`;
+}).join('\n')}
+`;
+            const parsedDoc = parseTextToDocument(docMarkdown);
+            const diagram = generateDiagramFromParsed(parsedDoc, newType);
+            return {
+              title: newTitle,
+              diagramType: newType,
+              documentText: docMarkdown,
+              message: parsedJson.feedbackMessage || `Applied AI refinement: "${cleanPrompt}"`,
+              nodes: diagram.nodes,
+              edges: diagram.edges
+            };
+          }
+        }
+      } else {
+        console.warn(`Groq AI refinement returned HTTP ${response.status}. Falling back to smart local refiner.`);
+      }
+    } catch (err) {
+      console.warn('Groq AI refinement failed, falling back to smart local refiner:', err);
+    }
+  }
+
+  // 2. Intelligent local fallback refiner (Works 100% offline)
+  const localResult = refineDiagramWithPrompt(
+    cleanPrompt,
+    currentProject.nodes,
+    currentProject.edges,
+    selectedNodeId
+  );
+
+  // Reconstruct updated document text from the refined nodes so the DocumentEditor stays in sync
+  const docLines = [`# ${currentProject.title}`, `Refined structure: ${localResult.message}`, ''];
+  localResult.nodes.forEach((node, idx) => {
+    const isDecision = node.data.shape === 'diamond' || node.data.title.includes('?');
+    const desc = node.data.subtitle || 'Operational stage in execution workflow';
+    docLines.push(`${idx + 1}. ${node.data.title}${isDecision && !node.data.title.includes('?') ? '?' : ''} - ${desc}`);
+  });
+  const updatedDocText = docLines.join('\n');
+
+  return {
+    title: currentProject.title,
+    diagramType: currentProject.diagramType,
+    documentText: updatedDocText,
+    message: localResult.message,
+    nodes: localResult.nodes,
+    edges: localResult.edges
+  };
 }
 
 

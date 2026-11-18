@@ -22,7 +22,7 @@ import { refineDiagramWithPrompt } from '../engine/aiRefiner';
 import { verifyAndLinkDiagramSources, applyApprovedUpdates } from '../engine/sourceVerification';
 import { transformDiagramForAudience } from '../engine/audienceTransformer';
 import { compareDocumentVersions } from '../engine/multiSourceParser';
-import { generateStructureWithAI } from '../engine/aiProvider';
+import { generateStructureWithAI, refineDiagramWithAI } from '../engine/aiProvider';
 import {
   getProjects,
   saveProject,
@@ -123,7 +123,7 @@ interface DiagramStore {
   setDiagramType: (type: DiagramType) => void;
   generateFromText: (type?: DiagramType) => void;
   realignLayout: (direction?: 'LR' | 'TB') => void;
-  refineWithPrompt: (prompt: string, selectedNodeId?: string) => void;
+  refineWithPrompt: (prompt: string, selectedNodeId?: string) => Promise<void>;
 
   // Project management
   loadProjectById: (id: string) => void;
@@ -563,13 +563,16 @@ export const useDiagramStore = create<DiagramStore>((set, get) => {
       saveProject(updated);
     },
 
-    refineWithPrompt: (prompt, targetNodeId) => {
+    refineWithPrompt: async (prompt, targetNodeId) => {
       const { currentProject, selectedNodeId } = get();
       const effectiveNodeId = targetNodeId || selectedNodeId;
-      const result = refineDiagramWithPrompt(prompt, currentProject.nodes, currentProject.edges, effectiveNodeId);
+      const result = await refineDiagramWithAI(prompt, currentProject, effectiveNodeId);
       const verifiedNodes = verifyAndLinkDiagramSources(result.nodes, currentProject.sources || []);
       const updated = {
         ...currentProject,
+        title: result.title,
+        diagramType: result.diagramType,
+        documentText: result.documentText,
         nodes: verifiedNodes,
         edges: result.edges
       };
@@ -582,6 +585,7 @@ export const useDiagramStore = create<DiagramStore>((set, get) => {
 
       get().pushHistory(verifiedNodes, result.edges);
       saveProject(updated);
+      set({ projects: getProjects() });
     },
 
     addSourceDocument: (doc) => {
