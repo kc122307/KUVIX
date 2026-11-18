@@ -218,7 +218,6 @@ const ALL_PROMPTS: PromptPreset[] = [
 ];
 
 const CATEGORIES = [
-  { id: 'all', label: 'All Prompts', icon: Sparkles },
   { id: 'Project management', label: 'Project management', icon: Briefcase },
   { id: 'AI planning', label: 'AI planning', icon: CheckSquare },
   { id: 'AI summary', label: 'AI summary', icon: FileText },
@@ -234,7 +233,7 @@ export const AiPromptGeneratorModal: React.FC = () => {
     generateFromAiPrompt
   } = useDiagramStore();
 
-  const [activeCategory, setActiveCategory] = useState<string>('all');
+  const [activeCategory, setActiveCategory] = useState<string>('Project management');
   const [promptInput, setPromptInput] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [shuffleSeed, setShuffleSeed] = useState<number>(0);
@@ -256,22 +255,19 @@ export const AiPromptGeneratorModal: React.FC = () => {
   // Deterministic shuffle using seed
   const displayPrompts = [...categoryPrompts]
     .sort((a, b) => {
-      const charSumA = a.text.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-      const charSumB = b.text.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-      const hashA = (charSumA + shuffleSeed * 13) % 97;
-      const hashB = (charSumB + shuffleSeed * 13) % 97;
+      const hashA = (a.id.charCodeAt(0) + shuffleSeed) % 17;
+      const hashB = (b.id.charCodeAt(0) + shuffleSeed) % 17;
       return hashA - hashB;
     })
     .slice(0, 8);
 
-  const handleGenerate = async (promptToUse?: string, categoryOverride?: string) => {
+  const handleGenerate = async (promptToUse?: string) => {
     const finalPrompt = (promptToUse || promptInput).trim();
     if (!finalPrompt || isGenerating) return;
 
     setIsGenerating(true);
     try {
-      const categoryToPass = categoryOverride || (activeCategory === 'all' ? 'AI diagram' : activeCategory);
-      await generateFromAiPrompt(finalPrompt, categoryToPass);
+      await generateFromAiPrompt(finalPrompt, activeCategory);
     } catch (err) {
       console.error('Failed to generate diagram structure:', err);
     } finally {
@@ -362,12 +358,9 @@ export const AiPromptGeneratorModal: React.FC = () => {
                   value={promptInput}
                   onChange={(e) => setPromptInput(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      handleGenerate();
-                    }
+                    if (e.key === 'Enter') handleGenerate();
                   }}
-                  placeholder="Enter what you want to visualize (e.g., Learning dance in three months, SaaS pipeline)..."
+                  placeholder="Please generate a flowchart for..."
                   className="w-full bg-slate-50/80 border border-purple-200 rounded-xl pl-3.5 sm:pl-4 pr-11 sm:pr-12 py-2.5 sm:py-3 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 shadow-xs focus:bg-white transition-all"
                   disabled={isGenerating}
                 />
@@ -413,7 +406,7 @@ export const AiPromptGeneratorModal: React.FC = () => {
                       key={preset.id}
                       onClick={() => {
                         setPromptInput(preset.text);
-                        handleGenerate(preset.text, preset.category);
+                        handleGenerate(preset.text);
                       }}
                       disabled={isGenerating}
                       className="group p-2.5 sm:p-3 bg-white hover:bg-purple-50/50 border border-slate-200 hover:border-purple-300 rounded-xl text-left transition-all shadow-xs hover:shadow-subtle flex items-center justify-between gap-2.5"
@@ -422,16 +415,9 @@ export const AiPromptGeneratorModal: React.FC = () => {
                         <div className="w-7 h-7 rounded-lg bg-purple-50 group-hover:bg-purple-100 text-purple-600 flex items-center justify-center shrink-0 transition-colors">
                           <IconComponent size={14} />
                         </div>
-                        <div className="min-w-0">
-                          <span className="text-xs text-slate-700 group-hover:text-purple-900 line-clamp-2 leading-snug font-medium block">
-                            {preset.text}
-                          </span>
-                          {activeCategory === 'all' && (
-                            <span className="text-[10px] text-slate-400 font-normal truncate block mt-0.5">
-                              {preset.category}
-                            </span>
-                          )}
-                        </div>
+                        <span className="text-xs text-slate-700 group-hover:text-purple-900 line-clamp-2 leading-snug font-medium">
+                          {preset.text}
+                        </span>
                       </div>
 
                       <div className="w-5 h-5 rounded-md bg-slate-100 group-hover:bg-purple-600 group-hover:text-white text-slate-500 flex items-center justify-center text-xs shrink-0 transition-colors">
